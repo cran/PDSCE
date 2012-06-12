@@ -1,166 +1,235 @@
 #include <math.h>
 #include <stdlib.h>
 
-
 double **make_mat(int nrow, int ncol);
 void delete_mat( double **mat);
 double *make_vec(int len);
-void delete_vec(double *vec);
-double soft(double x, double t);                  
+void delete_vec(double *vec);         
 				  
-void pdsc(double * Sin, double *Cov0, double * Inv0, int * pin, 
-            double * lamin, 
-            double * bin,
+void pdsc(double * S, double *Sigma, double * Omega, double * tosoft, int * pin, 
+            double * lam, 
+            double * tauin,
             double * tolin, 
             int * maxitin, 
             double * tolout, 
             int * maxitout, 
-            int * totalout, 
-            double * Sout,
-            double * Oout)
+            int * totalout)
 {
   int p=*pin;
-  double b=*bin;
-  double **S=make_mat(p,p);
-  double **Sigma=make_mat(p,p);
-  double **Omega=make_mat(p,p); 
-  double **lam=make_mat(p,p);
-  
-  //  make p rows and only one column
-  double *beta=make_vec(p); 
-  //used for the lasso regression
-  double *coltotal=make_vec(p);  
-  /* used for the termination criteria for the lasso regression */
-  
+  double tau=*tauin;  
   int i,j,jj,k, numit_in, numit_out;
-  double diff_in, diff_out, stotal, tmp;
-  double ct;
-  //  Initialize iterates and read in the sample cov/cor
-  stotal=0;
-  for(i=0; i < p; i++)
-  {
-    ct=0;
-    for ( j=0; j < p; j++)
-    {
-      S[i][j]=Sin[j*p+i];
-      lam[i][j]=lamin[j*p+i];
-      Sigma[i][j]=Cov0[j*p+i];
-      Omega[i][j]=Inv0[j*p+i];  
-      if( i < j)
-        stotal += fabs(S[i][j]);
-      if( i != j )
-        ct=ct+fabs(S[i][j]);
-    }
-    coltotal[i]=ct;
-  }
-
+  double diff_in, diff_out, tmp, newbeta, betadiff, tau_over_Sigma_jj, newtmp, val;
+  
+  double * S_jj, *Omega_jj, *Sigma_jj, * S_0j, *lam_0j, *Sigma_0j, *Omega_0j,
+         *Omega_j0, *Sigma_j0,
+         * beta_k, *beta_jj, *tosoft_jj, *tosoft_k, 
+         * Omega_k_jj, *Omega_jj_jj,  *S_jj_j,
+         * lam_jj_j, *Omega_0_jj,
+         * Omega_jj_j, *Omega_j_jj, *Sigma_j_jj,       
+         * Omega_kj;
+  
+ 
+  
   numit_out=0;
-  diff_out=*tolout*stotal+1;
-  while( (diff_out > (*tolout * stotal) ) && (numit_out < *maxitout) )
+  diff_out=*tolout+1;
+  while( (diff_out > *tolout) && (numit_out < *maxitout) )
   {
-    numit_out+=1;
+    numit_out++;
     diff_out = 0;
+    
+    S_jj=S;
+    S_0j=S;
+    lam_0j=lam; 
+    Omega_jj=Omega;
+    Sigma_jj=Sigma;
+    Sigma_0j=Sigma;
+    Omega_0j=Omega;
+    Omega_j0=Omega;
+    Sigma_j0=Sigma;
+    
     for(j=0; j < p; j++)
     {
       // update jth diagonal entry of Sigma
-      tmp = S[j][j] + b*Omega[j][j]; 
-      diff_out += fabs(tmp - Sigma[j][j]);
-      Sigma[j][j] = tmp;
-       
+      tmp = *S_jj + tau* *Omega_jj; 
+      diff_out += fabs(tmp - *Sigma_jj);
+      *Sigma_jj = tmp;
+      tau_over_Sigma_jj=tau / *Sigma_jj; 
+ 
       numit_in=0;
-     
-      //initialize beta    
-      for(k=0; k < p; k++)
-      {      
-        beta[k] = Sigma[k][j]; 
-      } 
-
-      diff_in=*tolin*coltotal[j]+1;      
-      while( (diff_in > (*tolin*coltotal[j])) && (numit_in < *maxitin) )
+      diff_in=*tolin+1;      
+      while( (diff_in > *tolin) && (numit_in < *maxitin) )
       {
-        numit_in+=1;
+        numit_in++;
         diff_in = 0;
-        for(jj=0; jj < p; jj++)
-        {        
-          if(jj != j)
-          {
-            tmp = 0;
-            for(k=0; k<p; k++)
+        
+        //first run:
+        
+        if(numit_in==1)
+        {
+          tosoft_jj=tosoft;    
+          Omega_0_jj=Omega;
+          Omega_jj_jj=Omega;
+          S_jj_j=S_0j;
+          beta_jj=Sigma_0j;
+          lam_jj_j=lam_0j;
+          for(jj=0; jj < p; jj++)
+          {        
+            if(jj != j)
             {
-              if(k != jj && k != j)
+              tmp = 0;
+              beta_k=Sigma_0j;
+              Omega_k_jj=Omega_0_jj;
+              for(k=0; k<p; k++)
               {
-               tmp=tmp+ Omega[k][jj] * beta[k];
+                if(k != jj && k != j)
+                {
+                 tmp+= *Omega_k_jj * *beta_k;  
+                }
+                beta_k++;
+                Omega_k_jj++;
               }
-            }
-            tmp = S[jj][j] - b*tmp/Sigma[j][j];
-            tmp = soft(tmp, lam[j][jj]);
-            tmp = tmp/( 1 + b*Omega[jj][jj]/Sigma[j][j]);
-            diff_in += fabs(tmp - beta[jj]);
-            beta[jj] = tmp;
+                           
+              tmp = *S_jj_j - tau_over_Sigma_jj *tmp;
+              *tosoft_jj=tmp;        
+              newtmp=0;
+              val = fabs(tmp) - *lam_jj_j;
+              if( val > 0)
+                if(tmp > 0)
+                   newtmp = val;
+                else
+                  newtmp = -val;
+              tmp=newtmp;  
+              
+              
+              newbeta = tmp/( 1 + tau_over_Sigma_jj * *Omega_jj_jj);
+              diff_in += fabs(newbeta - *beta_jj);
+              *beta_jj = newbeta;
+            } 
+            lam_jj_j++;
+            beta_jj++;
+            S_jj_j++;
+            Omega_jj_jj+=p+1;
+            Omega_0_jj+=p;
+            tosoft_jj++;
           }
-        }
+        } else
+        {
+          /*  Update tosoft only if beta_k changes */    
+          tosoft_jj=tosoft;
+          Omega_jj_jj=Omega;
+          S_jj_j=S_0j;
+          beta_jj=Sigma_0j;
+          lam_jj_j=lam_0j;     
+          Omega_0_jj=Omega;
+          for(jj=0; jj < p; jj++)
+          {        
+            if(jj != j)
+            {              
+              newtmp=0;
+              val = fabs(*tosoft_jj) - *lam_jj_j;
+              if( val > 0)
+                if(*tosoft_jj > 0)
+                   newtmp = val;
+                else
+                  newtmp = -val;
+              tmp=newtmp;  
+              
+              newbeta = tmp/( 1 + tau_over_Sigma_jj * *Omega_jj_jj);
+              
+             
+              if(newbeta != *beta_jj ) // then update tosoft
+              {
+                
+                betadiff=*beta_jj - newbeta;
+                tosoft_k=tosoft;
+                Omega_k_jj=Omega_0_jj;
+                for(k=0; k<p; k++)
+                {
+                  if(k != jj && k != j)
+                  {
+                   *tosoft_k +=  tau_over_Sigma_jj* *Omega_k_jj * betadiff;  
+                  }
+                  tosoft_k++;
+                  Omega_k_jj++;
+                }
+                diff_in+=fabs(betadiff);
+                *beta_jj=newbeta;
+              } 
+            }
+            beta_jj++;
+            Omega_0_jj+=p;            
+            tosoft_jj++;
+            lam_jj_j++;
+            Omega_jj_jj+=p+1;
+          } // end the jj for loop
+        } /* End: update tosoft only if beta_k changes */
+        diff_out+=diff_in;
       } // end inner while
 
-      /* the lasso regression for the jth row/column is complete 
-         with the result stored in beta */      
-
-      // move beta into the jth row/column of Sigma (no diagonal entry)
-      for(jj=0; jj <p; jj++)
-      {
-        if(jj != j)
-        {
-          tmp = beta[jj];
-          diff_out += fabs(tmp - Sigma[jj][j]);
-          Sigma[jj][j] = tmp;
-          Sigma[j][jj] = tmp;
-        }
-      }
-
+      /* the lasso regression for the jth column is complete */   
+      
       // update the jth row/column of Omega (no diagonal entry)
+      // update the jth row of Sigma  for symmetry
+      Omega_0_jj=Omega;
+      Omega_jj_j=Omega_0j;
+      Omega_j_jj=Omega_j0;
+      Sigma_j_jj=Sigma_j0;
+      beta_jj=Sigma_0j;
       for(jj=0; jj <p; jj++)
       {
         if(jj != j)
         {
           tmp=0;
+          beta_k=Sigma_0j;
+          Omega_k_jj=Omega_0_jj;
           for(k=0; k < p; k++)
           {
             if(k != j)
-              tmp = tmp + Omega[jj][k] * beta[k];
+              tmp+= *Omega_k_jj * *beta_k;
+            beta_k++;
+            Omega_k_jj++;
           }
-          tmp=-tmp/Sigma[j][j];
-          Omega[jj][j] = tmp;
-          Omega[j][jj] = tmp;
-        }
+          tmp=-tmp/ *Sigma_jj;
+          *Omega_jj_j= tmp;
+          *Omega_j_jj = tmp;
+          *Sigma_j_jj = *beta_jj;
+        } 
+        Omega_0_jj+=p;        
+        beta_jj++;        
+        Omega_jj_j++;
+        Omega_j_jj+=p;
+        Sigma_j_jj+=p;        
       }
 
       // update Omega jj
       tmp=0;
+      beta_k=Sigma_0j;
+      Omega_kj=Omega_0j;
       for(k=0; k < p; k++)
       {
         if(k != j)
-          tmp = tmp + beta[k] * Omega[k][j];
+          tmp = tmp + *beta_k * *Omega_kj;
+        Omega_kj++;
+        beta_k++;
       }
       tmp = 1 - tmp;
-      tmp = tmp/Sigma[j][j];
-      Omega[j][j] = tmp;
+      tmp = tmp/ *Sigma_jj;
+      *Omega_jj = tmp;
+      
+        
+      S_jj+=p+1;
+      S_0j+=p;
+      Omega_jj+=p+1;
+      Sigma_jj+=p+1;
+      Sigma_0j+=p;
+      lam_0j+=p;
+      Omega_0j+=p;
+      Omega_j0++;
+      Sigma_j0++;
+      
     }// end for loop over j   
   } // end outer while
   totalout[0] = numit_out;
-  //prepare output into Bout
-  for(j=0; j <p; j++)
-  {
-    for (i=0; i < p; i++)
-    {    
-      Sout[j*p+i] = Sigma[i][j];
-      Oout[j*p+i] = Omega[i][j];
-    }
-  }
-  delete_mat(S);
-  delete_mat(Sigma);
-  delete_mat(Omega);
-  delete_mat(lam);
-  delete_vec(beta);
-  delete_vec(coltotal);
 }
 
 
@@ -258,26 +327,6 @@ void bchol(double * xin, int * nin, int * pin, int * kin, double * bcov)
   delete_mat(r);
 }
 
-double soft(double x, double t)
-{
-  double tmp, ax, newx;
-  newx=0;
-  ax = fabs(x);
-  tmp = ax - t;
-  if( tmp > 0)
-  {
-    if(x > 0)
-    {
-      newx = tmp;
-    }
-    else
-    {
-      newx = -tmp;
-    }
-  }
-  return newx;
-}
-
 
 double **make_mat(int nrow, int ncol)
 {
@@ -309,5 +358,155 @@ void delete_vec(double *vec)
 {
   free(vec);  
 }
+
+/*
+				  
+void pdsc(double * S, double *Sigma, double * Omega, double * tosoft, int * pin, 
+            double * lam, 
+            double * tauin,
+            double * tolin, 
+            int * maxitin, 
+            double * tolout, 
+            int * maxitout, 
+            int * totalout)
+{
+  int p=pin[0];
+  double tau=tauin[0];
+  double tout=tolout[0];
+  double tin=tolin[0];  
+  int mitout=maxitout[0];
+  int mitin=maxitin[0];
+  int i,j,jj,k, numit_in, numit_out, jp, jppj, jjp, jppjj, jjppj;
+  double diff_in, diff_out, tmp, newbeta, betadiff, tau_over_Sigma_jj, newtmp, val;
+  
+  double Sigma_jj;
+  numit_out=0;
+  diff_out=tout+1.0;
+  while( (diff_out > tout) && (numit_out < mitout) )
+  {
+    numit_out++;
+    diff_out = 0.0;
+    for(j=0; j < p; j++)
+    {
+      jp=j*p;
+      jppj=jp+j;
+      tmp = S[jppj] + tau*Omega[jppj];
+      diff_out += fabs(tmp - Sigma[jppj]);
+      Sigma[jppj] = tmp;
+      Sigma_jj=Sigma[jppj];
+      tau_over_Sigma_jj=tau /Sigma_jj; 
+ 
+      numit_in=0;
+      diff_in=tin+1.0;      
+      while( (diff_in > tin) && (numit_in < mitin) )
+      {
+        numit_in++;
+        diff_in = 0.0;
+        if(numit_in==1)
+        {
+          for(jj=0; jj < p; jj++)
+          {        
+            if(jj != j)
+            {
+              jjp=jj*p;
+              jppjj=jp+jj;
+              tmp = 0.0;
+              for(k=0; k<p; k++)
+              {
+                if(k != jj && k != j)
+                {
+                 tmp+= Omega[jjp+k] * Sigma[jp+k];                 
+                }
+              }                
+              tmp = S[jppjj] - tau_over_Sigma_jj *tmp;
+              tosoft[jj]=tmp;        
+              newtmp=0.0;
+              val = fabs(tmp) - lam[jppjj];
+              if( val > 0.0)
+                if(tmp > 0.0)
+                   newtmp = val;
+                else
+                  newtmp = -val;
+              tmp=newtmp;  
+              newbeta = tmp/( 1.0 + tau_over_Sigma_jj *Omega[jjp+jj]);
+              diff_in += fabs(newbeta - Sigma[jppjj]);
+              Sigma[jppjj] = newbeta;
+            } 
+          }
+        } else
+        {
+        
+          for(jj=0; jj < p; jj++)
+          {        
+            if(jj != j)
+            { 
+              jjp=jj*p;
+              jppjj=jp+jj;               
+              newtmp=0.0;
+              val = fabs(tosoft[jj]) - lam[jppjj];
+              if( val > 0.0)
+                if(tosoft[jj] > 0.0)
+                   newtmp = val;
+                else
+                  newtmp = -val;
+              tmp=newtmp;  
+              newbeta = tmp/( 1.0 + tau_over_Sigma_jj * Omega[jjp+jj]);
+              if(newbeta != Sigma[jppjj]) // then update tosoft
+              {          
+                betadiff=Sigma[jppjj] - newbeta;
+                for(k=0; k<p; k++)
+                {
+                  if(k != jj && k != j)
+                  {
+                   tosoft[k] +=  tau_over_Sigma_jj * Omega[jjp+k] * betadiff;  
+                  }
+                }
+                diff_in+=fabs(betadiff);
+                Sigma[jppjj]=newbeta;
+              } 
+            }
+          } // end the jj for loop
+        } 
+        diff_out+=diff_in;
+      } // end inner while
+       
+      
+      // update the jth row/column of Omega (no diagonal entry)
+      // update the jth row of Sigma  for symmetry
+      for(jj=0; jj <p; jj++)
+      {
+        if(jj != j)
+        {
+          jjp=jj*p;
+          jjppj=jjp+j;
+          jppjj=jp+jj;
+          tmp=0.0;
+          for(k=0; k < p; k++)
+          {
+            if(k != j)
+              tmp+= Omega[jjp+k] * Sigma[jp+k];
+          }
+          tmp=-tmp/ Sigma_jj;
+          Omega[jppjj]= tmp;
+          Omega[jjppj] = tmp;
+          Sigma[jjppj] = Sigma[jppjj];
+        } 
+      }
+
+      // update Omega jj
+      tmp=0.0;
+      for(k=0; k < p; k++)
+      {
+        if(k != j)
+          tmp = tmp + Sigma[jp+k]* Omega[jp+k];
+      }
+      tmp = 1.0 - tmp;
+      tmp = tmp/ Sigma_jj;
+      Omega[jppj] = tmp;
+    }// end for loop over j   
+  } // end outer while
+  totalout[0] = numit_out;
+}
+*/
 
 

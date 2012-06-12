@@ -25,14 +25,7 @@ function(x, k)
         phi.new = qr.solve(xtx, xty, tol=1e-200)
       }else
       {
-        o=try(expr=svd(newx, nv=(n-1), nu=(n-1)), silent=TRUE)
-        if( inherits(o, "try-error") )
-        {   
-		  cat("trying LINPACK\n")
-          o=svd(newx, LINPACK=TRUE)
-		  o$v = o$v[,-n]
-		  o$u = o$u[,-n]
-        }
+        o=svd(newx, nv=(n-1), nu=(n-1))
 		d=o$d[-n]
 		w=1/d
         phi.new=o$v%*%(w*crossprod(o$u, newy))

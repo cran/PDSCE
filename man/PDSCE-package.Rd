@@ -9,15 +9,6 @@ Positive definite sparse covariance estimators
 A package to compute and tune some positive definite and sparse covariance estimators
 }
 \details{
-\tabular{ll}{
-Package: \tab PDSCE\cr
-Type: \tab Package\cr
-Version: \tab 1.1\cr
-Date: \tab 2012-08-25\cr
-License: \tab GPL-2\cr
-LazyLoad: \tab yes\cr
-}
-
 The main functions are \code{\link{pdsoft}}, \code{\link{pdsoft.cv}}, 
 \code{\link{band.chol}}, and \code{\link{band.chol.cv}}. 
 }

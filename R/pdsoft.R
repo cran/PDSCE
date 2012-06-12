@@ -85,13 +85,16 @@ s0=NULL, i0=NULL, standard=TRUE,tolin=1e-8, tolout=1e-8, maxitin=1e4,
 
   if( sum(lam) > 0 )
   {
+    Soff=S
+    diag(Soff)=0
+    tolmult=sum(abs(Soff))/2
     S = as.double(S)
     i0 = as.double(i0)
     s0 = as.double(s0)
     lam = as.double(lam)
     b = as.double(tau)
-    tolin = as.double(tolin)
-    tolout = as.double(tolout)
+    tolin = as.double(tolin*(tolmult/p))
+    tolout = as.double(tolout*tolmult)
     totalout=1
     mode(totalout) = "integer"
     mode(p) = "integer"
@@ -103,12 +106,13 @@ s0=NULL, i0=NULL, standard=TRUE,tolin=1e-8, tolout=1e-8, maxitin=1e4,
     tmp2=matrix(0, nrow=p, ncol=p)
     tmp2=as.double(tmp2)
 
-    coutput=.C("pdsc",Sin=S, Cov0=s0, Inv0=i0, pin=p, lamin=lam, bin=b, tolin=tolin,
-            maxitin=maxitin, tolout=tolout, maxitout=maxitout, totalout=totalout,
-            Sout=tmp, Oout=tmp2)
+    tosoft=as.double(rep(0,p))
+    
+    coutput=.C("pdsc",S=S, Sigma=s0, Omega=i0, tosoft=tosoft, pin=p, lam=lam, tauin=b, tolin=tolin,
+            maxitin=maxitin, tolout=tolout, maxitout=maxitout, totalout=totalout)
 
-    sigma = matrix(coutput$Sout, nrow=p, ncol=p)
-    omega = matrix(coutput$Oout, nrow=p, ncol=p)
+    sigma = matrix(coutput$Sigma, nrow=p, ncol=p)
+    omega = matrix(coutput$Omega, nrow=p, ncol=p)
   
     if(!quiet)
     {
