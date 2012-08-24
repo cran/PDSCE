@@ -1,0 +1,14 @@
+29f6c63819aa4d619339ee5f6698e01e *DESCRIPTION
+075f037a62b74f8d969d93a55071a2c5 *NAMESPACE
+03fa810d6f6377640ee0860f4c45ea59 *R/band.chol.R
+cf5364632754a28a4ac01ec6e42c15df *R/band.chol.cv.R
+70aa0833a830002bd9ef5609e877e849 *R/fast.band.R
+0d5b9803beef04e1df970ce09a329b47 *R/pdsoft.R
+4d96b3f86cbe55ddce4a43865a3b0ec3 *R/pdsoft.cv.R
+6f2c13ea611b77e91be32add68db0a55 *R/safe.band.R
+1cec606bd2c974fde642ec09a34ffb72 *man/PDSCE-package.Rd
+8050c9666b1e603a5e1257605943f73e *man/band.chol.Rd
+ac5efab72751636f03260fe0d9296858 *man/band.chol.cv.Rd
+7964bd5a04e6a29f0165b4517aa8cfae *man/pdsoft.Rd
+ca2538a57dbc0859027d374a60e6d9d4 *man/pdsoft.cv.Rd
+beaf84f40e1d7e6da16fddb06f26e86c *src/pdsc.c

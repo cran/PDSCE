@@ -1,0 +1,5 @@
+export(band.chol)
+export(band.chol.cv)
+export(pdsoft)
+export(pdsoft.cv)
+useDynLib(PDSCE) 
