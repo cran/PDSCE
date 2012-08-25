@@ -11,7 +11,7 @@ by Rothman, Levina, and Zhu (2010).
 }
 \usage{
 band.chol.cv(x, k.vec = NULL, method = c("fast", "safe"), nsplits = 10, 
-             n.tr = NULL, quiet = FALSE)
+             n.tr = NULL, quiet = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,8 +26,8 @@ The default is the long vector \code{0:min(n-2, p-1)}.
   \item{method}{
 The method to use. The default is
 \code{method="fast"}, which uses the Grahm-Schmidt style algorithm and must have \eqn{k \leq \min(n-2, p-1)}.
-Alternatively, \code{method="safe"} uses an inverse or generalized inverse of each regression's design matrix
-and is more numerically stable (and capable of handling \eqn{k \in \{0,\ldots,p-1\}} regardless of \eqn{n}).
+Alternatively, \code{method="safe"} uses an inverse or generalized inverse to compute estimates
+of the regression coefficients and is more numerically stable (and capable of handling \eqn{k \in \{0,\ldots,p-1\}} regardless of \eqn{n}).
 }
   \item{nsplits}{
 Number of random splits to use for banding parameter selection.
@@ -65,7 +65,7 @@ Adam J. Rothman
 
 \examples{
 set.seed(1)
-n=10
+n=50
 p=20
 true.cov=diag(p)
 true.cov[cbind(1:(p-1), 2:p)]=0.4

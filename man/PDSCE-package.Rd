@@ -12,8 +12,8 @@ A package to compute and tune some positive definite and sparse covariance estim
 \tabular{ll}{
 Package: \tab PDSCE\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2012-08-23\cr
+Version: \tab 1.1\cr
+Date: \tab 2012-08-25\cr
 License: \tab GPL-2\cr
 LazyLoad: \tab yes\cr
 }

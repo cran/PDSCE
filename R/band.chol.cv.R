@@ -1,5 +1,5 @@
 band.chol.cv <-
-function(x, k.vec=NULL, method= c("fast", "safe"), nsplits=10, n.tr=NULL, quiet = FALSE)
+function(x, k.vec=NULL, method= c("fast", "safe"), nsplits=10, n.tr=NULL, quiet = TRUE)
 {
   method=match.arg(method)
   n=dim(x)[1]

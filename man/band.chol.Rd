@@ -26,8 +26,8 @@ Logical: \code{centered=TRUE} should be used if the columns of \code{x} have alr
   \item{method}{
 The method to use. The default is
 \code{method="fast"}, which uses the Grahm-Schmidt style algorithm and must have \eqn{k \leq \min(n-2, p-1)}.
-Alternatively, \code{method="safe"} uses an inverse or generalized inverse of each regression's design matrix
-and is more numerically stable (and capable of handling \eqn{k \in \{0,\ldots,p-1\}} regardless of \eqn{n}).
+Alternatively, \code{method="safe"} uses an inverse or generalized inverse to compute estimates
+of the regression coefficients and is more numerically stable (and capable of handling \eqn{k \in \{0,\ldots,p-1\}} regardless of \eqn{n}).
 }
 }
 \details{
@@ -52,7 +52,7 @@ Adam J. Rothman
 
 \examples{
 set.seed(1)
-n=10
+n=50
 p=20
 true.cov=diag(p)
 true.cov[cbind(1:(p-1), 2:p)]=0.4

@@ -10,7 +10,7 @@ Computes the sparse and positive definite covariance matrix estimator proposed b
 \usage{
 pdsoft(s, lam, tau = 1e-04, init = c("soft", "diag", "dense", "user"), 
        s0 = NULL, i0 = NULL, standard = TRUE, tolin = 1e-08, 
-       tolout = 1e-08, maxitin = 10000, maxitout = 1000, quiet = FALSE)
+       tolout = 1e-08, maxitin = 10000, maxitout = 1000, quiet = TRUE)
 }
 
 \arguments{
@@ -80,8 +80,8 @@ Adam J. Rothman
 }
 \note{
 So long as \code{s} is symmetric with positive diagonal entries and
-the default initialization is used 
-(or the user initialization has \code{i0} as a positive definite matrix), 
+\code{init} is not set to \code{"user"}
+(or \code{init} is set to \code{"user"} and \code{i0} as a positive definite matrix), 
 then \code{omega} is positive definite.  If \code{tolin} and \code{tolout} are too large, 
 or \code{maxitin} and \code{maxitout} are too small, then \code{sigma} may be indefinite.
 }
@@ -92,7 +92,7 @@ or \code{maxitin} and \code{maxitout} are too small, then \code{sigma} may be in
 
 \examples{
 set.seed(1)
-n=10
+n=50
 p=20
 true.cov=diag(p)
 true.cov[cbind(1:(p-1), 2:p)]=0.4

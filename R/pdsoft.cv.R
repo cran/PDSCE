@@ -1,6 +1,6 @@
 pdsoft.cv <-
 function(x, lam.vec=NULL, standard=TRUE, init = c("diag", "soft", "dense"), tau=1e-4, nsplits=10,
-                 n.tr=NULL, tolin = 1e-08, tolout = 1e-08, maxitin = 10000, maxitout = 1000, quiet = FALSE)
+                 n.tr=NULL, tolin = 1e-08, tolout = 1e-08, maxitin = 10000, maxitout = 1000, quiet = TRUE)
 {
   init=match.arg(init)
   n=dim(x)[1]

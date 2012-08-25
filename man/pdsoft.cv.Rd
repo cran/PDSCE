@@ -12,7 +12,7 @@ the sparse and positive definite covariance matrix estimator proposed by Rothman
 pdsoft.cv(x, lam.vec = NULL, standard = TRUE, 
           init = c("diag", "soft", "dense"), tau = 1e-04, 
           nsplits = 10, n.tr = NULL, tolin = 1e-08, tolout = 1e-08, 
-          maxitin = 10000, maxitout = 1000, quiet = FALSE)
+          maxitin = 10000, maxitout = 1000, quiet = TRUE)
 }
 
 \arguments{
@@ -26,7 +26,7 @@ The default for \code{standard=TRUE} is \code{seq(from=0, to=1, by=0.05)}
 and the default for \code{standard=FALSE} is \code{seq(from=0, to=m, length.out=20)}, 
 where \code{m} is the maximum magnitude of the off-diagonal entries in \code{s}.  Both of these default choices
 are far from excellent and are time consuming, particularly for values close to zero.  
-The user should consider refining this set.
+The user should consider refining this set by increasing its resolution in a narrower range.
 }
   \item{standard}{
 Logical: \code{standard=TRUE} first computes the observed sample correlation matrix from \code{s}, then 
@@ -70,7 +70,7 @@ Logical: \code{quiet=TRUE} suppresses the printing of progress updates.
 }
 }
 \details{
-See \code{\link{pdsoft}} for more information.
+See Rothman (2012) for the objective function and more information.
 }
 \value{
 A list with
@@ -98,7 +98,7 @@ or \code{maxitin} and \code{maxitout} are too small, then \code{sigma} may be in
 
 \examples{
 set.seed(1)
-n=10
+n=50
 p=20
 true.cov=diag(p)
 true.cov[cbind(1:(p-1), 2:p)]=0.4

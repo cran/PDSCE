@@ -1,7 +1,7 @@
 pdsoft <-
 function(s, lam,  tau=1e-4, init=c("soft", "diag", "dense", "user"),
 s0=NULL, i0=NULL, standard=TRUE,tolin=1e-8, tolout=1e-8, maxitin=1e4, 
-                  maxitout=1e3, quiet=FALSE)
+                  maxitout=1e3, quiet=TRUE)
 {
   p=dim(s)[1]
   init=match.arg(init)
