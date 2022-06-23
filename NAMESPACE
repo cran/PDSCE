@@ -3,3 +3,5 @@ export(band.chol.cv)
 export(pdsoft)
 export(pdsoft.cv)
 useDynLib(PDSCE) 
+
+importFrom("stats", "cov")
